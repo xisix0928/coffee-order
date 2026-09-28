@@ -546,7 +546,6 @@ let myOrderUnsub=null;
 function init() {
   const hash = location.hash;
   const sidMatch = hash.match(/[#&]sid=([a-zA-Z0-9_-]+)/);
-  const adminMatch = hash.match(/[#&]admin=1/);
   sessionId = sidMatch ? sidMatch[1] : null;
 
   if (!sessionId) {
@@ -555,10 +554,7 @@ function init() {
     return;
   }
 
-  // URL에 &admin=1 있으면 관리자, 없으면 참여자
-  isAdmin = !!adminMatch;
-
-  // 세션 확인
+  // 세션 확인 + 관리자 토큰 비교
   firestore.collection('sessions').doc(sessionId).get()
     .then(snap => {
       if (!snap.exists) {
@@ -566,8 +562,13 @@ function init() {
         showError('이 링크는 유효하지 않거나 만료됐어요.');
         return;
       }
+      const data = snap.data();
+      // Firestore에 저장된 adminToken과 localStorage의 토큰 비교
+      let storedToken = null;
+      try { storedToken = localStorage.getItem('adminToken_' + sessionId); } catch(e){}
+      isAdmin = !!(data.adminToken && storedToken && data.adminToken === storedToken);
       hideSplash();
-      startApp(snap.data());
+      startApp(data);
     })
     .catch(e => {
       hideSplash();
@@ -597,16 +598,24 @@ async function createSession(fromParticipant) {
     .map(b => b.toString(36)).join('').slice(0,8);
 
   try {
-    await firestore.collection('sessions').doc(newId).set({ createdAt: Date.now(), title:'커피 주문' });
+    // 관리자 고유 토큰 생성
+    const adminToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2,'0')).join('');
+
+    await firestore.collection('sessions').doc(newId).set({
+      createdAt: Date.now(), title:'커피 주문', adminToken
+    });
+
+    // localStorage에 토큰 저장 (새로고침해도 관리자 인증 유지)
+    try { localStorage.setItem('adminToken_'+newId, adminToken); } catch(e){}
 
     if (unsubscribe) { unsubscribe(); unsubscribe=null; }
     sessionId = newId;
     isAdmin = true;
-    try { localStorage.setItem('admin_'+newId, '1'); } catch(e){}
     myOrderId = null;
     editingOrderId = null;
 
-    history.replaceState(null, '', location.pathname + location.search + '#sid=' + newId + '&admin=1');
+    history.replaceState(null, '', location.pathname + location.search + '#sid=' + newId);
 
     if (fromParticipant) {
       document.getElementById('new-session-card').style.display='none';
