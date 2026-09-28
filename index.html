@@ -261,6 +261,7 @@
   </h1>
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" onclick="switchTab('order')" id="tab-order">주문하기</button>
+    <button class="tab-btn" onclick="switchTab('new-session')" id="tab-new-session" style="display:none">➕ 세션 만들기</button>
     <button class="tab-btn" onclick="switchTab('admin')" id="tab-admin" style="display:none">📋 취합 현황</button>
   </div>
 </div>
@@ -353,13 +354,23 @@
 
     <button class="btn-primary" id="submit-btn" onclick="submitOrder()" disabled>주문 추가하기</button>
 
-    <!-- 참여자용 새 세션 만들기 -->
-    <div id="new-session-card" style="display:none;margin-top:8px">
-      <div class="card" style="background:var(--surface2);border-style:dashed">
-        <div class="card-title" style="margin-bottom:8px">🔗 새 주문 세션 만들기</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">나도 새 세션을 만들어 내 모임 주문을 취합할 수 있어요.</div>
-        <button class="btn-outline" id="new-session-btn" onclick="createSession(true)" style="width:100%;justify-content:center">➕ 내 주문 세션 만들기</button>
+    <!-- 참여자용 새 세션 만들기 (탭으로 이동됨) -->
+    <div id="new-session-card" style="display:none"></div>
+  </div>
+
+  <!-- 세션 만들기 뷰 (참여자용) -->
+  <div class="view" id="view-new-session">
+    <div class="card">
+      <div class="card-title">➕ 내 세션 만들기</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.7">
+        새 주문 세션을 만들고 링크를 공유하면 내 모임의 커피 주문을 취합할 수 있어요.<br>
+        세션은 내가 직접 삭제하기 전까지 유지돼요.
       </div>
+      <button class="btn-primary" id="new-session-btn2" onclick="createSession(true)" style="width:100%;justify-content:center;padding:14px;font-size:15px">☕ 새 세션 시작하기</button>
+    </div>
+    <div class="card" id="my-sessions-card">
+      <div class="card-title">📂 내가 만든 세션</div>
+      <div id="my-sessions-list"><div style="font-size:13px;color:var(--text3);text-align:center;padding:12px 0">저장된 세션이 없어요</div></div>
     </div>
   </div>
 
@@ -608,6 +619,8 @@ async function createSession(fromParticipant) {
 
     // localStorage에 토큰 저장 (새로고침해도 관리자 인증 유지)
     try { localStorage.setItem('adminToken_'+newId, adminToken); } catch(e){}
+    // 내가 만든 세션 목록에 추가
+    saveMySession(newId, '커피 주문');
 
     if (unsubscribe) { unsubscribe(); unsubscribe=null; }
     sessionId = newId;
@@ -618,12 +631,12 @@ async function createSession(fromParticipant) {
     history.replaceState(null, '', location.pathname + location.search + '#sid=' + newId);
 
     if (fromParticipant) {
-      document.getElementById('new-session-card').style.display='none';
       document.getElementById('my-order-banner').classList.remove('show');
       document.getElementById('editing-banner').style.display='none';
       const rp=document.getElementById('role-pill');
       rp.textContent='관리자'; rp.className='role-pill admin';
       document.getElementById('tab-admin').style.display='';
+      document.getElementById('tab-new-session').style.display='none';
       document.getElementById('session-label').textContent='세션 ID: '+sessionId+' · 관리자 모드';
       const inp=document.getElementById('share-url-display');
       if (inp) inp.value=location.origin + location.pathname + '#sid=' + sessionId;
@@ -651,9 +664,12 @@ function startApp(meta) {
   if (isAdmin) {
     rp.textContent='관리자'; rp.className='role-pill admin';
     document.getElementById('tab-admin').style.display='';
+    document.getElementById('tab-new-session').style.display='none';
   } else {
     rp.textContent='참여자'; rp.className='role-pill user';
     document.getElementById('tab-admin').style.display='none';
+    document.getElementById('tab-new-session').style.display='';
+    renderMySessions();
   }
 
   const bar=document.getElementById('session-bar');
@@ -736,6 +752,84 @@ function switchTab(tab) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('view-'+tab).classList.add('active');
+  if (tab === 'new-session') renderMySessions();
+}
+
+// ═══════════════════════════════════
+// 내가 만든 세션 목록
+// ═══════════════════════════════════
+function saveMySession(sid, title) {
+  try {
+    let list = JSON.parse(localStorage.getItem('my_sessions')||'[]');
+    if (!list.find(s=>s.sid===sid)) {
+      list.unshift({ sid, title: title||'커피 주문', createdAt: Date.now() });
+      if (list.length > 20) list = list.slice(0,20);
+      localStorage.setItem('my_sessions', JSON.stringify(list));
+    }
+  } catch(e){}
+}
+
+function removeMySession(sid) {
+  try {
+    let list = JSON.parse(localStorage.getItem('my_sessions')||'[]');
+    list = list.filter(s=>s.sid!==sid);
+    localStorage.setItem('my_sessions', JSON.stringify(list));
+    try { localStorage.removeItem('adminToken_'+sid); } catch(e){}
+  } catch(e){}
+  renderMySessions();
+}
+
+function renderMySessions() {
+  const el = document.getElementById('my-sessions-list');
+  if (!el) return;
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem('my_sessions')||'[]'); } catch(e){}
+  if (!list.length) {
+    el.innerHTML='<div style="font-size:13px;color:var(--text3);text-align:center;padding:12px 0">저장된 세션이 없어요</div>';
+    return;
+  }
+  el.innerHTML = list.map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title||'커피 주문'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">세션 ID: ${s.sid}</div>
+      </div>
+      <button onclick="enterMySession('${s.sid}')" style="padding:6px 12px;border:1.5px solid var(--accent);border-radius:6px;background:none;color:var(--accent);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">들어가기</button>
+      <button onclick="deleteMySession('${s.sid}')" style="padding:6px 10px;border:1.5px solid var(--danger);border-radius:6px;background:none;color:var(--danger);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">삭제</button>
+    </div>
+  `).join('');
+}
+
+function enterMySession(sid) {
+  // localStorage에 adminToken 있으면 관리자로 입장
+  let token = null;
+  try { token = localStorage.getItem('adminToken_'+sid); } catch(e){}
+  firestore.collection('sessions').doc(sid).get().then(snap => {
+    if (!snap.exists) { showToast('세션이 존재하지 않아요. 삭제되었을 수 있어요.'); removeMySession(sid); return; }
+    const data = snap.data();
+    isAdmin = !!(token && data.adminToken && data.adminToken === token);
+    if (unsubscribe) { unsubscribe(); unsubscribe=null; }
+    if (myOrderUnsub) { myOrderUnsub(); myOrderUnsub=null; }
+    sessionId = sid;
+    myOrderId = null;
+    editingOrderId = null;
+    history.replaceState(null,'',location.pathname+'#sid='+sid);
+    startApp(data);
+    switchTab(isAdmin ? 'admin' : 'order');
+  }).catch(()=>showToast('세션을 불러오는 데 실패했어요.'));
+}
+
+function deleteMySession(sid) {
+  showConfirm('이 세션을 목록에서 삭제할까요?\n(Firestore 데이터도 함께 삭제돼요)', async ()=>{
+    try {
+      // orders 하위 컬렉션 삭제
+      const snap = await firestore.collection('sessions').doc(sid).collection('orders').get();
+      await Promise.all(snap.docs.map(d=>d.ref.delete()));
+      await firestore.collection('sessions').doc(sid).delete();
+    } catch(e){}
+    removeMySession(sid);
+    showToast('세션이 삭제됐어요');
+  });
 }
 
 // ═══════════════════════════════════
