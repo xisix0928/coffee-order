@@ -562,7 +562,8 @@ function init() {
         showError('이 링크는 유효하지 않거나 만료됐어요.');
         return;
       }
-      isAdmin = false;
+      // localStorage에 관리자 여부 저장했으면 복원
+      try { isAdmin = localStorage.getItem('admin_'+sessionId) === '1'; } catch(e){ isAdmin=false; }
       hideSplash();
       startApp(snap.data());
     })
@@ -599,6 +600,7 @@ async function createSession(fromParticipant) {
     if (unsubscribe) { unsubscribe(); unsubscribe=null; }
     sessionId = newId;
     isAdmin = true;
+    try { localStorage.setItem('admin_'+newId, '1'); } catch(e){}
     myOrderId = null;
     editingOrderId = null;
 
