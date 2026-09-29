@@ -192,6 +192,46 @@
   @keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.3)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.1)}}
   .live-label{font-size:12px;color:#22C55E;font-weight:600;}
 
+  /* 관리자 설정 패널 */
+  .settings-section{margin-bottom:16px;}
+  .settings-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-weight:700;color:var(--text);user-select:none;}
+  .settings-toggle:hover{background:var(--surface2);}
+  .settings-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--surface);padding:16px;display:none;}
+  .settings-body.open{display:block;}
+  .settings-group{margin-bottom:18px;}
+  .settings-group:last-child{margin-bottom:0;}
+  .settings-group-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+  .brand-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+  .brand-toggle-row:last-child{border-bottom:none;}
+  .brand-toggle-left{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text);}
+  .toggle-switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:12px;transition:.2s;}
+  .toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+  input:checked+.toggle-slider{background:var(--accent);}
+  input:checked+.toggle-slider:before{transform:translateX(18px);}
+  .menu-edit-brand{margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+  .menu-edit-brand-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);cursor:pointer;font-size:13px;font-weight:700;color:var(--text);}
+  .menu-edit-brand-header:hover{background:var(--border);}
+  .menu-edit-brand-body{display:none;padding:8px 12px;}
+  .menu-edit-brand-body.open{display:block;}
+  .menu-item-row{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);}
+  .menu-item-row:last-of-type{border-bottom:none;}
+  .menu-item-name{flex:1;font-size:13px;color:var(--text);}
+  .btn-del-menu{background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;padding:2px 4px;line-height:1;flex-shrink:0;}
+  .btn-del-menu:hover{opacity:.7;}
+  .add-menu-row{display:flex;gap:6px;margin-top:8px;}
+  .add-menu-input{flex:1;padding:7px 10px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;outline:none;}
+  .add-menu-input:focus{border-color:var(--accent);}
+  .btn-add-menu{padding:7px 12px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .btn-add-menu:hover{background:var(--accent-light);}
+  .other-name-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .other-name-input{flex:1;padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;outline:none;}
+  .other-name-input:focus{border-color:var(--accent);}
+  .btn-save-settings{padding:10px 18px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:14px;}
+  .btn-save-settings:hover{background:var(--accent-light);}
+  .btn-save-settings:disabled{opacity:.5;cursor:not-allowed;}
+
   #new-session-card{display:none;margin-top:8px;}
 
   @media(max-width:540px){
@@ -384,6 +424,41 @@
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--text3)">이 링크를 공유하면 참여자들이 로그인 없이 바로 주문할 수 있어요</div>
     </div>
+
+    <!-- 관리자 설정 패널 -->
+    <div class="settings-section">
+      <div class="settings-toggle" onclick="toggleSettings()">
+        <span>⚙️ 메뉴 설정</span>
+        <span id="settings-chevron" style="font-size:12px;color:var(--text3)">▼</span>
+      </div>
+      <div class="settings-body" id="settings-body">
+        <!-- 브랜드 노출 선택 -->
+        <div class="settings-group">
+          <div class="settings-group-title">공유할 프랜차이즈 선택</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">참여자에게 보여줄 브랜드를 선택해요. 꺼두면 참여자 화면에서 숨겨집니다.</div>
+          <div id="brand-toggles"></div>
+        </div>
+
+        <!-- 기타 상점 이름 -->
+        <div class="settings-group">
+          <div class="settings-group-title">기타 상점 이름 설정</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px">참여자 화면에서 "기타 상점" 버튼에 표시될 이름이에요.</div>
+          <div class="other-name-row">
+            <input type="text" class="other-name-input" id="other-store-name-input" placeholder="기타 상점" maxlength="20">
+          </div>
+        </div>
+
+        <!-- 메뉴 편집 -->
+        <div class="settings-group">
+          <div class="settings-group-title">브랜드별 메뉴 편집</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">각 브랜드의 메뉴를 추가하거나 삭제할 수 있어요.</div>
+          <div id="menu-edit-list"></div>
+        </div>
+
+        <button class="btn-save-settings" id="save-settings-btn" onclick="saveSettings()">💾 설정 저장</button>
+      </div>
+    </div>
+
     <div class="admin-summary" id="admin-summary"></div>
     <div class="admin-toolbar">
       <button class="btn-outline" onclick="copyOrders()">📋 텍스트 복사</button>
@@ -474,6 +549,9 @@ const COMMON_MENUS = [
   { name:'자몽에이드',      temps:['아이스'],       sizes:[],        extras:[] },
   { name:'기타 (직접입력)', temps:['아이스','핫'], sizes:['M','L'], extras:['샷추가','시럽추가'], isCustom:true },
 ];
+// 기본 메뉴 백업 (커스텀 메뉴 편집 시 원본 참조용)
+const DEFAULT_MENUS = {};
+
 const BRANDS = {
   starbucks:{ name:'스타벅스', emoji:'🟢', menus:[
     { name:'아메리카노',       temps:['아이스','핫'],            sizes:['Tall','Grande','Venti'], extras:['샷추가','시럽추가','바닐라시럽'] },
@@ -540,6 +618,13 @@ const BRANDS = {
   other:{ name:'기타 상점', emoji:'🏪', menus:COMMON_MENUS },
 };
 
+// 기본 메뉴 깊은 복사 저장 (설정 패널에서 원본 메뉴 목록 참조용)
+(function(){
+  Object.keys(BRANDS).forEach(k => {
+    DEFAULT_MENUS[k] = BRANDS[k].menus.map(m => Object.assign({}, m));
+  });
+})();
+
 // ═══════════════════════════════════
 // 상태
 // ═══════════════════════════════════
@@ -550,6 +635,18 @@ let unsubscribe=null;
 let myOrderId=null;
 let editingOrderId=null;
 let myOrderUnsub=null;
+
+// 세션 설정 (관리자가 저장, 참여자가 읽음)
+// enabledBrands: Set of brand keys that are shown
+// customOtherName: string for "기타 상점" display name
+// customMenus: { brandKey: [ menuName, ... ] }  — null means use default
+let sessionSettings = {
+  enabledBrands: new Set(Object.keys({starbucks:1,mega:1,ediya:1,compose:1,baekdabang:1,other:1})),
+  customOtherName: '기타 상점',
+  customMenus: {}  // brandKey -> array of menu names to keep (null = all defaults)
+};
+// working copy for the settings UI before saving
+let draftSettings = null;
 
 // ═══════════════════════════════════
 // 앱 시작
@@ -600,7 +697,7 @@ function showError(msg) {
 // 세션 생성
 // ═══════════════════════════════════
 async function createSession(fromParticipant) {
-  const btnId = fromParticipant ? 'new-session-btn' : 'create-btn';
+  const btnId = fromParticipant ? 'new-session-btn2' : 'create-btn';
   const btn = document.getElementById(btnId);
   const origText = btn ? btn.textContent : '';
   if (btn) { btn.disabled=true; btn.textContent='생성 중...'; }
@@ -660,6 +757,9 @@ function startApp(meta) {
   document.getElementById('app-header').style.display='';
   document.getElementById('app-main').style.display='';
 
+  // 세션 설정 읽기 (Firestore meta에서)
+  applySessionSettings(meta);
+
   const rp=document.getElementById('role-pill');
   if (isAdmin) {
     rp.textContent='관리자'; rp.className='role-pill admin';
@@ -689,9 +789,65 @@ function startApp(meta) {
 
   if (isAdmin) {
     subscribeOrders();
+    renderSettingsPanel();
   } else {
     subscribeMyOrder();
   }
+}
+
+// Firestore 세션 데이터에서 설정 적용
+function applySessionSettings(meta) {
+  const ALL_BRANDS = ['starbucks','mega','ediya','compose','baekdabang','other'];
+
+  // enabledBrands
+  if (meta.enabledBrands && Array.isArray(meta.enabledBrands)) {
+    sessionSettings.enabledBrands = new Set(meta.enabledBrands);
+  } else {
+    sessionSettings.enabledBrands = new Set(ALL_BRANDS);
+  }
+
+  // customOtherName
+  sessionSettings.customOtherName = meta.customOtherName || '기타 상점';
+
+  // customMenus — stored as { brandKey: ['menu1','menu2',...] }
+  sessionSettings.customMenus = meta.customMenus || {};
+
+  // 참여자 화면에 반영: BRANDS를 동적으로 재구성
+  rebuildEffectiveBrands();
+}
+
+// 실제로 참여자에게 보일 브랜드/메뉴 목록 구성
+function rebuildEffectiveBrands() {
+  const otherName = sessionSettings.customOtherName || '기타 상점';
+  // 기타 상점 이름 업데이트
+  BRANDS.other.name = otherName;
+
+  // 커스텀 메뉴 적용 (DEFAULT_MENUS 기준으로 필터)
+  Object.keys(BRANDS).forEach(key => {
+    const defaults = DEFAULT_MENUS[key];
+    if (sessionSettings.customMenus && sessionSettings.customMenus[key]) {
+      const kept = sessionSettings.customMenus[key];
+      BRANDS[key].menus = defaults.filter(m => m.isCustom || kept.includes(m.name));
+    } else {
+      BRANDS[key].menus = [...defaults];
+    }
+  });
+
+  // 브랜드 버튼 표시/숨김 + 이름 업데이트
+  document.querySelectorAll('.brand-btn').forEach(btn => {
+    const b = btn.dataset.brand;
+    btn.style.display = sessionSettings.enabledBrands.has(b) ? '' : 'none';
+    if (b === 'other') {
+      // 텍스트 노드 업데이트
+      btn.childNodes.forEach(n => {
+        if (n.nodeType === 3 && n.textContent.trim()) n.textContent = otherName;
+      });
+    }
+  });
+
+  // other-brand-field 레이블 업데이트
+  const otherInpLabel = document.querySelector('label[for="other-brand-input"]');
+  // other-brand-field placeholder는 상점이름 입력란이므로 그대로 두됨
 }
 
 // ═══════════════════════════════════
@@ -844,8 +1000,17 @@ function selectBrand(btn) {
   document.getElementById('qty-display').textContent=qty;
 
   const of=document.getElementById('other-brand-field');
-  of.style.display=selectedBrand==='other'?'':'none';
-  if (selectedBrand!=='other') document.getElementById('other-brand-input').value='';
+  // "기타 상점" 선택 시 필드를 보여주되, 커스텀 이름이 있으면 입력란에 미리 채움
+  if (selectedBrand==='other') {
+    of.style.display='';
+    const customName = sessionSettings.customOtherName;
+    if (customName && customName !== '기타 상점') {
+      document.getElementById('other-brand-input').value = customName;
+    }
+  } else {
+    of.style.display='none';
+    document.getElementById('other-brand-input').value='';
+  }
 
   document.getElementById('menu-card').style.display='';
   const sel=document.getElementById('menu-select');
@@ -1153,6 +1318,181 @@ async function clearAll() {
       showToast('초기화 실패');
     }
   });
+}
+
+// ═══════════════════════════════════
+// 관리자 설정 패널
+// ═══════════════════════════════════
+function toggleSettings() {
+  const body = document.getElementById('settings-body');
+  const chev = document.getElementById('settings-chevron');
+  const open = body.classList.toggle('open');
+  chev.textContent = open ? '▲' : '▼';
+}
+
+function renderSettingsPanel() {
+  if (!isAdmin) return;
+
+  // 드래프트 설정 초기화 (deep copy)
+  draftSettings = {
+    enabledBrands: new Set(sessionSettings.enabledBrands),
+    customOtherName: sessionSettings.customOtherName,
+    customMenus: {}
+  };
+  // customMenus deep copy — draft stores full list of menu names per brand
+  Object.keys(BRANDS).forEach(key => {
+    if (sessionSettings.customMenus && sessionSettings.customMenus[key]) {
+      draftSettings.customMenus[key] = [...sessionSettings.customMenus[key]];
+    } else {
+      // 기본: 기타(직접입력) 제외한 메뉴 이름 전부
+      draftSettings.customMenus[key] = DEFAULT_MENUS[key].filter(m=>!m.isCustom).map(m=>m.name);
+    }
+  });
+
+  renderBrandToggles();
+  renderOtherNameInput();
+  renderMenuEditList();
+}
+
+function renderBrandToggles() {
+  const container = document.getElementById('brand-toggles');
+  if (!container) return;
+  const labels = { starbucks:'스타벅스', mega:'메가커피', ediya:'이디야', compose:'컴포즈커피', baekdabang:'백다방', other: draftSettings.customOtherName||'기타 상점' };
+  const emojis = { starbucks:'🟢', mega:'🟡', ediya:'🔵', compose:'🟣', baekdabang:'🔴', other:'🏪' };
+  container.innerHTML = Object.keys(labels).map(key => `
+    <div class="brand-toggle-row">
+      <div class="brand-toggle-left">${emojis[key]} <span>${labels[key]}</span></div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-${key}" ${draftSettings.enabledBrands.has(key)?'checked':''} onchange="onBrandToggleChange('${key}',this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  `).join('');
+}
+
+function onBrandToggleChange(key, checked) {
+  if (checked) draftSettings.enabledBrands.add(key);
+  else draftSettings.enabledBrands.delete(key);
+}
+
+function renderOtherNameInput() {
+  const inp = document.getElementById('other-store-name-input');
+  if (inp) inp.value = draftSettings.customOtherName || '기타 상점';
+}
+
+function renderMenuEditList() {
+  const container = document.getElementById('menu-edit-list');
+  if (!container) return;
+  const labels = { starbucks:'🟢 스타벅스', mega:'🟡 메가커피', ediya:'🔵 이디야', compose:'🟣 컴포즈커피', baekdabang:'🔴 백다방', other:'🏪 기타 상점' };
+
+  container.innerHTML = Object.keys(BRANDS).map(key => {
+    const menuNames = draftSettings.customMenus[key] || [];
+    const menuRows = menuNames.map((name, idx) => `
+      <div class="menu-item-row">
+        <span class="menu-item-name">${esc(name)}</span>
+        <button class="btn-del-menu" onclick="removeMenuFromDraft('${key}',${idx})" title="삭제">✕</button>
+      </div>
+    `).join('');
+    return `
+      <div class="menu-edit-brand" id="med-${key}">
+        <div class="menu-edit-brand-header" onclick="toggleMenuEdit('${key}')">
+          <span>${labels[key]}</span>
+          <span style="font-size:11px;color:var(--text3)">${menuNames.length}개 ▼</span>
+        </div>
+        <div class="menu-edit-brand-body" id="med-body-${key}">
+          <div id="med-rows-${key}">${menuRows || '<div style="font-size:12px;color:var(--text3);padding:4px 0">메뉴가 없어요</div>'}</div>
+          <div class="add-menu-row">
+            <input type="text" class="add-menu-input" id="med-inp-${key}" placeholder="메뉴 이름 추가" maxlength="30" onkeydown="if(event.key==='Enter')addMenuToDraft('${key}')">
+            <button class="btn-add-menu" onclick="addMenuToDraft('${key}')">추가</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleMenuEdit(key) {
+  const body = document.getElementById('med-body-'+key);
+  if (body) body.classList.toggle('open');
+}
+
+function removeMenuFromDraft(key, idx) {
+  if (!draftSettings) return;
+  draftSettings.customMenus[key].splice(idx, 1);
+  renderMenuEditList();
+}
+
+function addMenuToDraft(key) {
+  if (!draftSettings) return;
+  const inp = document.getElementById('med-inp-'+key);
+  const val = inp ? inp.value.trim() : '';
+  if (!val) return;
+  if (!draftSettings.customMenus[key]) draftSettings.customMenus[key] = [];
+  if (!draftSettings.customMenus[key].includes(val)) {
+    draftSettings.customMenus[key].push(val);
+    renderMenuEditList();
+    // 추가 후 해당 브랜드 섹션 열어두기
+    const body = document.getElementById('med-body-'+key);
+    if (body) body.classList.add('open');
+  } else {
+    showToast('이미 있는 메뉴예요');
+  }
+}
+
+async function saveSettings() {
+  if (!isAdmin || !draftSettings) return;
+  const btn = document.getElementById('save-settings-btn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  // 기타 상점 이름
+  const otherNameInp = document.getElementById('other-store-name-input');
+  draftSettings.customOtherName = (otherNameInp ? otherNameInp.value.trim() : '') || '기타 상점';
+
+  // Firestore에 저장할 데이터
+  const settingsData = {
+    enabledBrands: [...draftSettings.enabledBrands],
+    customOtherName: draftSettings.customOtherName,
+    customMenus: {}
+  };
+  // customMenus: 기본 메뉴와 다를 때만 저장 (null이면 기본 사용 의미)
+  Object.keys(draftSettings.customMenus).forEach(key => {
+    const defaults = DEFAULT_MENUS[key].filter(m=>!m.isCustom).map(m=>m.name);
+    const draft = draftSettings.customMenus[key] || [];
+    // 내용이 다르면 저장
+    settingsData.customMenus[key] = draft;
+  });
+
+  try {
+    await firestore.collection('sessions').doc(sessionId).update(settingsData);
+    // 로컬 적용
+    sessionSettings.enabledBrands = new Set(settingsData.enabledBrands);
+    sessionSettings.customOtherName = settingsData.customOtherName;
+    sessionSettings.customMenus = settingsData.customMenus;
+
+    // BRANDS 재구성 (기본값에서 다시 필터)
+    Object.keys(BRANDS).forEach(key => {
+      const defaults = DEFAULT_MENUS[key];
+      const kept = settingsData.customMenus[key];
+      if (kept) {
+        BRANDS[key].menus = defaults.filter(m => m.isCustom || kept.includes(m.name));
+      } else {
+        BRANDS[key].menus = [...defaults];
+      }
+    });
+    BRANDS.other.name = settingsData.customOtherName;
+
+    // 브랜드 버튼 업데이트
+    rebuildEffectiveBrands();
+
+    // 브랜드 토글 레이블 업데이트 (기타 상점 이름)
+    draftSettings = null;
+    renderSettingsPanel();
+
+    showToast('✅ 설정이 저장됐어요!');
+    btn.disabled = false; btn.textContent = '💾 설정 저장';
+  } catch(e) {
+    showToast('저장 실패. 다시 시도해 주세요.');
+    btn.disabled = false; btn.textContent = '💾 설정 저장';
+  }
 }
 
 // ═══════════════════════════════════
